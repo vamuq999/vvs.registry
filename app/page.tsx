@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Script from "next/script";
 
 // @ts-ignore
 declare global {
@@ -26,13 +27,11 @@ export default function Page() {
   const [walletAddress, setWalletAddress] = useState("");
   const [signer, setSigner] = useState<any>(null);
 
-  // Load from localStorage
   useEffect(() => {
     const stored = localStorage.getItem("vvsArtifacts");
     if (stored) setArtifacts(JSON.parse(stored));
   }, []);
 
-  // Connect Wallet via WalletConnect (CDN version)
   const connectWallet = async () => {
     try {
       const provider = new window.WalletConnectProvider({
@@ -50,13 +49,11 @@ export default function Page() {
     }
   };
 
-  // Register artifact & send ETH
   const registerArtifact = async (name: string, tierEth: string) => {
     if (!name || !tierEth || !signer) return;
-
     try {
       const tx = await signer.sendTransaction({
-        to: walletAddress, // your treasury wallet or any receiver
+        to: walletAddress, // or your treasury wallet
         value: window.ethers.utils.parseEther(tierEth),
       });
       await tx.wait();
@@ -66,7 +63,12 @@ export default function Page() {
         name,
         wallet: walletAddress,
         price: parseFloat(tierEth),
-        tier: tierEth === "0.01" ? "Class A" : tierEth === "0.05" ? "Class B" : "Class C",
+        tier:
+          tierEth === "0.01"
+            ? "Class A"
+            : tierEth === "0.05"
+            ? "Class B"
+            : "Class C",
         timestamp: new Date().toLocaleString(),
       };
 
@@ -79,7 +81,6 @@ export default function Page() {
     }
   };
 
-  // Export registry as PNG
   const exportPNG = async () => {
     const element = document.getElementById("registry");
     if (!element) return;
@@ -90,7 +91,6 @@ export default function Page() {
     link.click();
   };
 
-  // Export registry as PDF
   const exportPDF = async () => {
     const element = document.getElementById("registry");
     if (!element) return;
@@ -104,95 +104,99 @@ export default function Page() {
   };
 
   return (
-    <main className="p-6 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">VVS Registry</h1>
+    <>
+      {/* CDNs */}
+      <Script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js" />
+      <Script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js" />
+      <Script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" />
+      <Script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" />
 
-      {/* Wallet Connect */}
-      <button
-        className="bg-green-600 text-white px-4 py-2 rounded mb-4"
-        onClick={connectWallet}
-      >
-        {walletAddress
-          ? `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
-          : "Connect Wallet"}
-      </button>
+      <main className="p-6 max-w-md mx-auto">
+        <h1 className="text-2xl font-bold mb-4">VVS Registry</h1>
 
-      {/* Register Form */}
-      {signer && walletAddress && (
-        <div className="mb-6 flex flex-col gap-2">
-          <input
-            id="artifactName"
-            className="border p-2 rounded"
-            placeholder="Artifact name"
-          />
-          <select
-            id="tierSelect"
-            className="border p-2 rounded"
-            defaultValue="0.01"
-          >
-            <option value="0.01">Class A – 0.01 ETH</option>
-            <option value="0.05">Class B – 0.05 ETH</option>
-            <option value="0.1">Class C – 0.1 ETH</option>
-          </select>
-          <button
-            className="bg-blue-600 text-white p-2 rounded"
-            onClick={() => {
-              const nameInput = (document.getElementById(
-                "artifactName"
-              ) as HTMLInputElement).value;
-              const tierInput = (document.getElementById(
-                "tierSelect"
-              ) as HTMLSelectElement).value;
-              registerArtifact(nameInput, tierInput);
-            }}
-          >
-            Register Artifact
-          </button>
-        </div>
-      )}
+        {/* Wallet Connect */}
+        <button
+          className="bg-green-600 text-white px-4 py-2 rounded mb-4"
+          onClick={connectWallet}
+        >
+          {walletAddress
+            ? `Connected: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+            : "Connect Wallet"}
+        </button>
 
-      {/* Export Buttons */}
-      {artifacts.length > 0 && (
-        <div className="flex gap-2 mb-4">
-          <button className="bg-gray-700 text-white p-2 rounded" onClick={exportPNG}>
-            Export PNG
-          </button>
-          <button className="bg-gray-700 text-white p-2 rounded" onClick={exportPDF}>
-            Export PDF
-          </button>
-        </div>
-      )}
-
-      {/* Artifact Registry */}
-      <div id="registry">
-        {artifacts.length === 0 && <p>No artifacts registered yet.</p>}
-        {artifacts.map((artifact) => {
-          const tierColor =
-            artifact.tier === "Class A"
-              ? "border-yellow-500"
-              : artifact.tier === "Class B"
-              ? "border-sky-500"
-              : "border-pink-500";
-
-          return (
-            <div
-              key={artifact.id}
-              className={`border-2 ${tierColor} rounded-lg p-4 mb-4 bg-gradient-to-br from-gray-50 to-white shadow-md relative`}
+        {/* Register Form */}
+        {signer && walletAddress && (
+          <div className="mb-6 flex flex-col gap-2">
+            <input
+              id="artifactName"
+              className="border p-2 rounded"
+              placeholder="Artifact name"
+            />
+            <select id="tierSelect" className="border p-2 rounded" defaultValue="0.01">
+              <option value="0.01">Class A – 0.01 ETH</option>
+              <option value="0.05">Class B – 0.05 ETH</option>
+              <option value="0.1">Class C – 0.1 ETH</option>
+            </select>
+            <button
+              className="bg-blue-600 text-white p-2 rounded"
+              onClick={() => {
+                const nameInput = (document.getElementById(
+                  "artifactName"
+                ) as HTMLInputElement).value;
+                const tierInput = (document.getElementById(
+                  "tierSelect"
+                ) as HTMLSelectElement).value;
+                registerArtifact(nameInput, tierInput);
+              }}
             >
-              <div className="absolute top-2 right-2 text-sm font-bold text-gray-400">
-                {artifact.tier}
+              Register Artifact
+            </button>
+          </div>
+        )}
+
+        {/* Export Buttons */}
+        {artifacts.length > 0 && (
+          <div className="flex gap-2 mb-4">
+            <button className="bg-gray-700 text-white p-2 rounded" onClick={exportPNG}>
+              Export PNG
+            </button>
+            <button className="bg-gray-700 text-white p-2 rounded" onClick={exportPDF}>
+              Export PDF
+            </button>
+          </div>
+        )}
+
+        {/* Artifact Registry */}
+        <div id="registry">
+          {artifacts.length === 0 && <p>No artifacts registered yet.</p>}
+          {artifacts.map((artifact) => {
+            const tierColor =
+              artifact.tier === "Class A"
+                ? "border-yellow-500"
+                : artifact.tier === "Class B"
+                ? "border-sky-500"
+                : "border-pink-500";
+
+            return (
+              <div
+                key={artifact.id}
+                className={`border-2 ${tierColor} rounded-lg p-4 mb-4 bg-gradient-to-br from-gray-50 to-white shadow-md relative`}
+              >
+                <div className="absolute top-2 right-2 text-sm font-bold text-gray-400">
+                  {artifact.tier}
+                </div>
+                <h2 className="font-serif text-lg mb-1">{artifact.name}</h2>
+                <p className="text-sm">
+                  Owner: {artifact.wallet.slice(0, 6)}...{artifact.wallet.slice(-4)}
+                </p>
+                <p className="text-sm">Price Paid: {artifact.price} ETH</p>
+                <p className="text-xs mt-1">Registered: {artifact.timestamp}</p>
+                <p className="text-xs text-gray-400">ID: {artifact.id}</p>
               </div>
-              <h2 className="font-serif text-lg mb-1">{artifact.name}</h2>
-              <p className="text-sm">
-                Owner: {artifact.wallet.slice(0, 6)}...{artifact.wallet.slice(-4)}
-              </p>
-              <p className="text-sm">Price Paid: {artifact.price} ETH</p>
-              <p className="text-xs mt-1">Registered: {artifact.timestamp}</p>
-              <p className="text-xs text-gray-400">ID: {artifact.id}</p>
-            </div>
-          );
-        })}
-      </div>
-    </main>
+            );
+          })}
+        </div>
+      </main>
+    </>
   );
 }
