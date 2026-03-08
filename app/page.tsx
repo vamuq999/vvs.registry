@@ -27,9 +27,21 @@ export default function Page() {
   const [walletAddress, setWalletAddress] = useState("");
   const [signer, setSigner] = useState<any>(null);
 
+  // Load artifacts from localStorage and add dummy if empty
   useEffect(() => {
     const stored = localStorage.getItem("vvsArtifacts");
     if (stored) setArtifacts(JSON.parse(stored));
+    else {
+      const dummy: Artifact = {
+        id: "dummy001",
+        name: "First Artifact",
+        wallet: "0x1234...ABCD",
+        price: 0.01,
+        tier: "Class A",
+        timestamp: new Date().toLocaleString(),
+      };
+      setArtifacts([dummy]);
+    }
   }, []);
 
   const connectWallet = async () => {
@@ -53,7 +65,7 @@ export default function Page() {
     if (!name || !tierEth || !signer) return;
     try {
       const tx = await signer.sendTransaction({
-        to: walletAddress, // or your treasury wallet
+        to: walletAddress, // your treasury wallet
         value: window.ethers.utils.parseEther(tierEth),
       });
       await tx.wait();
@@ -112,11 +124,11 @@ export default function Page() {
       <Script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" />
 
       <main className="p-6 max-w-md mx-auto">
-        <h1 className="text-2xl font-bold mb-4">VVS Registry</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center">VVS Registry</h1>
 
         {/* Wallet Connect */}
         <button
-          className="bg-green-600 text-white px-4 py-2 rounded mb-4"
+          className="bg-green-600 text-white px-4 py-2 rounded mb-4 w-full"
           onClick={connectWallet}
         >
           {walletAddress
@@ -157,10 +169,10 @@ export default function Page() {
         {/* Export Buttons */}
         {artifacts.length > 0 && (
           <div className="flex gap-2 mb-4">
-            <button className="bg-gray-700 text-white p-2 rounded" onClick={exportPNG}>
+            <button className="bg-gray-700 text-white p-2 rounded w-1/2" onClick={exportPNG}>
               Export PNG
             </button>
-            <button className="bg-gray-700 text-white p-2 rounded" onClick={exportPDF}>
+            <button className="bg-gray-700 text-white p-2 rounded w-1/2" onClick={exportPDF}>
               Export PDF
             </button>
           </div>
@@ -168,7 +180,6 @@ export default function Page() {
 
         {/* Artifact Registry */}
         <div id="registry">
-          {artifacts.length === 0 && <p>No artifacts registered yet.</p>}
           {artifacts.map((artifact) => {
             const tierColor =
               artifact.tier === "Class A"
